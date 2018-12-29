@@ -74,7 +74,7 @@ func BrowseQuotes(parameters BrowseParameters) Response {
 		parameters.Locale,
 		parameters.OriginPlace,
 		parameters.DestinationPlace,
-		parameters.OutbandDate,
+		parameters.OutboundDate,
 		parameters.InboundDate,
 	))
 	res := get(browseQuotes)
