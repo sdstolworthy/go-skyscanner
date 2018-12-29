@@ -67,7 +67,7 @@ func get(url string) *http.Response {
 /*
 BrowseQuotes stub
 */
-func BrowseQuotes(parameters Parameters) Response {
+func BrowseQuotes(parameters BrowseParameters) Response {
 	browseQuotes := formatURL(fmt.Sprintf("browsequotes/v1.0/%v/%v/%v/%v/%v/%v/%v",
 		parameters.Country,
 		parameters.Currency,
@@ -82,14 +82,47 @@ func BrowseQuotes(parameters Parameters) Response {
 }
 
 // ProcessDestination does asynchronous api requests to the SkyScanner API
-func ProcessDestination(destination string, params *Parameters, out chan<- *QuoteSummary) {
-	params.DestinationPlace = destination
+func ProcessDestination(params *BrowseParameters) (*QuoteSummary, error) {
 	SkyscannerQuotes := BrowseQuotes(*params)
 	quote, err := SkyscannerQuotes.LowestPrice()
 	if err != nil {
-
 		log.Printf("%v\n\n", err)
+		return nil, err
+	}
+	return quote, nil
+}
+
+// ProcessDestinationAsync asynchronously processes quote requests
+func ProcessDestinationAsync(params *BrowseParameters, out chan<- *QuoteSummary) {
+	q, err := ProcessDestination(params)
+	if err != nil {
 		out <- nil
 	}
-	out <- quote
+	out <- q
+}
+
+// BatchDestinations processes multiple destinations
+func BatchDestinations(params *BatchBrowseParameters) []*QuoteSummary {
+	var newQuotes []*QuoteSummary
+	quoteChannels := make(chan *QuoteSummary)
+	for _, origin := range params.Origins {
+		for _, destination := range params.Destinations {
+			fmt.Println("origin", origin, "destination", destination)
+			p := BrowseParameters{
+				BaseParameters:   params.BaseParameters,
+				DestinationPlace: destination,
+				OriginPlace:      origin,
+			}
+			go ProcessDestinationAsync(&p, quoteChannels)
+		}
+	}
+	for range params.Destinations {
+		q := <-quoteChannels
+		fmt.Println(q)
+		if q == nil {
+			continue
+		}
+		newQuotes = append(newQuotes, q)
+	}
+	return newQuotes
 }
