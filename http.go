@@ -29,9 +29,7 @@ func parseResponse(response *http.Response) Response {
 
 func getRequest(url string) *http.Request {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
-	var config Config
-	config.getConfig()
-	req.Header.Set("X-Mashape-Key", config.MashapeKey)
+	req.Header.Set("X-Mashape-Key", *apiConfig.MashapeKey)
 
 	if err != nil {
 		log.Fatal(err)
@@ -46,9 +44,7 @@ func getClient() *http.Client {
 }
 
 func formatURL(path string) string {
-	var c Config
-	c.getConfig()
-	baseURL := c.getConfig().BaseURL
+	baseURL := *apiConfig.BaseURL
 
 	return fmt.Sprintf("%v%v", baseURL, path)
 }
