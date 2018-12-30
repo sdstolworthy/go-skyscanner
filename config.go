@@ -8,6 +8,7 @@ type Config struct {
 
 var apiConfig Config
 
-func setConfig(config *Config) {
+// SetConfig sets global variables for use in the SDK
+func SetConfig(config *Config) {
 	apiConfig = *config
 }
